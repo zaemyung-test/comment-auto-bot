@@ -1,0 +1,27 @@
+name: Comment on new issues
+
+on:
+  issues:
+    types: [opened, labeled]
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Comment based on labels
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issueNumber = context.issue.number;
+            const { owner, repo } = context.repo;
+            const res = await github.rest.issues.listLabelsOnIssue({ owner, repo, issue_number: issueNumber });
+            const labels = res.data.map(l => l.name);
+            let body = "Thank you for your contribution!";
+            if (labels.includes('bug')) {
+              body = "Thank you. We will fix it";
+            } else if (labels.includes('feature')) {
+              body = "Thank you, we will consider to include this feature.";
+            }
+            await github.rest.issues.createComment({ owner, repo, issue_number: issueNumber, body });
